@@ -1,0 +1,28 @@
+name: Tag Guard
+
+on:
+  push:
+    tags:
+      - '*' # This triggers the job whenever any tag is pushed
+
+jobs:
+  validate-sha: # This is the "Job Name" you will search for in Rulesets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches full history so we can see the SHAs
+
+      - name: Check SHA Origin
+        run: |
+          # Get the SHA of the tag being pushed
+          TAG_SHA=${{ github.sha }}
+          
+          # Check if the tag SHA exists in the history of the main branch
+          if git merge-base --is-ancestor "$TAG_SHA" origin/main; then
+            echo "✅ Valid: SHA belongs to CE history."
+          else
+            echo "❌ ERROR: This SHA is not in the CE branch history!"
+            exit 1
+          fi
